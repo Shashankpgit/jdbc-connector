@@ -21,9 +21,12 @@
             <directory>${basedir}/src/main/resources</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
-                <include>metadata.json</include>
-                <include>ui-config.json</include>
+                <include>*</include>
             </includes>
+            <excludes>
+                <exclude>jdbc-connector.conf</exclude>
+                <exclude>config.json</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>target</directory>

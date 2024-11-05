@@ -1,162 +1,81 @@
 {
     "postgres-connector": {
-        "schema": {
-            "title": "Connector Config",
-            "type": "object",
-            "properties": {
-                "source": {
-                    "title": "Storage Source",
-                    "type": "object",
-                    "properties": {
-                        "database": {
-                            "type": "object",
-                            "title": "Database Information",
-                            "fieldDescription": [
-                                {
-                                    "type": "string",
-                                    "description": "Enter appropriate database information."
-                                }
-                            ],
-                            "properties":{
-                                "type": {
-                                    "type": "string",
-                                    "title": "Database Type",
-                                    "default": "PostgreSQL"
-                                },
-                                "host": {
-                                    "type": "string",
-                                    "title": "Host",
-                                    "pattern":"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$"
-                                },
-                                "port": {
-                                    "type": "number",
-                                    "title": "Port",
-                                    "minimum": 1,
-                                    "maximum": 65535
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "title": "Database Name",
-                                    "pattern": "^[a-zA-Z0-9_]{1,64}$"
-                                },
-                                "username": {
-                                    "type": "string",
-                                    "title": "Database Username"
-                                },
-                                "password": {
-                                    "type": "string",
-                                    "title": "Database Password"
-                                }
-                            }
-                        },
-                        "table": {
-                            "type": "string",
-                            "title": "Table Name",
-                            "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]{0,62}$",
-                            "fieldDescription": [
-                                {
-                                    "type": "string",
-                                    "description": "It is recommended to create a new user and grant only SELECT permission on the table above."
-                                }
-                            ]
-                        },
-                        "timestamp-column": {
-                            "type": "string",
-                            "title": "Timestamp Column",
-                            "fieldDescription": [
-                                {
-                                    "type": "string",
-                                    "description": "The table needs to have a timestamp field. Periodically we will look for records updated/created based on the selected timestamp field and will sync them to our platform."
-                                }
-                            ]
-                        }
-                    }
-                },
-                "operations-config": {
-                    "title": "Operations Configuration",
-                    "type": "object",
-                    "properties": {
-                        "batch-size": {
-                            "type": "number",
-                            "title": "Batch Size",
-                            "default": 100,
-                            "fieldDescription": [
-                                {
-                                    "type": "string",
-                                    "description": "Batch Size refers to the number of records we pull per query. The higher the batch size, the faster we pull the records. However, if the batch size is too high, the query may time out."
-                                }
-                            ]
-                        },
-                        "max-batches": {
-                            "type": "number",
-                            "title": "Maximum Batches",
-                            "default": 10,
-                            "fieldDescription": [
-                                {
-                                    "type": "string",
-                                    "description": "Maximum Batches refers to the maximum number of batches we are allowed to pull. Once the max-batches is reached, the query stops, and rest of the data is pulled in the next run."
-                                }
-                            ]
-                        },
-                        "polling-interval": {
-                            "type": "string",
-                            "title": "Polling Interval",
-                            "enum": ["Once", "Periodic"],
-                            "fieldDescription": [{
-                                "type": "string",
-                                "description": "Depending on the batch-size and maximum-batches, select an appropriate schedule. A shorter schedule with a large batch-size and max-batches will result in parallel queries, which may result in more load on the database."
-                            }]
-                        }
-                    },
-                    "dependencies": {
-                        "polling-interval": {
-                            "oneOf": [
-                                {
-                                    "properties": {
-                                        "polling-interval": {
-                                            "enum": [
-                                                "Periodic"
-                                            ]
-                                        },
-                                        "schedule": {
-                                            "type": "string",
-                                            "title": "Schedule",
-                                            "enum": ["Hourly", "Daily", "Weekly", "Monthly"],
-                                            "fieldDescription": [
-                                                {
-                                                    "type": "string",
-                                                    "description": "Maximum Batches refers to the maximum number of batches we are allowed to pull. Once the max-batches is reached, the query stops, and rest of the data is pulled in the next run."
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    "required": ["schedule"]
-                                },
-                                {
-                                    "properties": {
-                                        "polling-interval": {
-                                            "enum": [
-                                                "Once"
-                                            ]
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "required": ["source", "operations-config"]
-        },
+        "title": "PostgreSQL JDBC Connector Setup Instructions",
+        "description": "Configure PostgreSQL JDBC Connector",
+        "helptext": "Follow the below instructions to populate the required inputs needed for the connector correctly.",
+        "type": "object",
         "properties": {
-            "operations_config": {
-                "batch_size": {
-                    "ui:readonly": true
-                },
-                "max_batches": {
-                    "ui:readonly": true
-                }
+            "source_database_host": {
+                "type": "string",
+                "title": "Host",
+                "pattern":"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$",
+                "description": "Enter database server hostname or IP (e.g., db.example.com)",
+                "helptext": "<p><strong>Host:</strong> Enter the IP address or hostname of the database server. <em>Example:</em> <em>192.168.1.1</em> or <em>db.example.com</em>.</p>\n<p><strong>Recommendation:</strong> If a replica server is available, it is preferable to connect to the replica instead of the main server. This can help reduce load on the primary database.</p>"
+            },
+            "source_database_port": {
+                "type": "number",
+                "title": "Port",
+                "minimum": 1,
+                "maximum": 65535,
+                "default": 5432,
+                "description": "Enter port number (default: 5432)",
+                "helptext": "<p><strong>Port:</strong> Enter the port number of the database server. Default PostgreSQL port is <em>5432</em>.</p>"
+            },
+            "source_database_username": {
+                "type": "string",
+                "title": "Database Username",
+                "description": "Enter database username",
+                "helptext": "<p><strong>Username:</strong> Enter the database username. It is recommended to create a new user with only SELECT permission for security. Use the following SQL commands to create a limited-access user:</p><code>CREATE USER new_user WITH PASSWORD 'your_password';</br>GRANT CONNECT ON DATABASE your_database TO new_user;<br/>GRANT USAGE ON SCHEMA public TO new_user;<br/>GRANT SELECT ON ALL TABLES IN SCHEMA public TO new_user;</code><p>For more information, refer to the <a href=\"https://www.postgresql.org/docs/current/sql-grant.html\" target=\"_blank\">PostgreSQL GRANT documentation</a>.</p>"
+            },
+            "source_database_pwd": {
+                "type": "string",
+                "title": "Database Password",
+                "format": "password",
+                "description": "Enter database password",
+                "helptext": "<p><strong>Password:</strong> The password for the database connection.</p>"
+            },
+            "source_database_name": {
+                "type": "string",
+                "title": "Database Name",
+                "pattern": "^[a-zA-Z0-9_]{1,64}$",
+                "description": "Enter database name",
+                "helptext": "<p><strong>Database:</strong> Enter the name of the database to connect to. Ensure the user has the appropriate access.</p>"
+            },
+            "source_table": {
+                "type": "string",
+                "title": "Table Name",
+                "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]{0,62}$",
+                "description": "Enter table name",
+                "helptext": "<p><strong>Table:</strong> Specify the name of the table from which to fetch data. The user should have SELECT permissions only on this table.</p>"
+            },
+            "source_timestamp_column": {
+                "type": "string",
+                "title": "Timestamp Column",
+                "description": "Enter timestamp column for incremental fetch",
+                "helptext": "<p><strong>Timestamp Column:</strong> Specify the column that stores timestamps to fetch new and updated data incrementally.</p><ul><li><strong>Ensure this field is updated</strong> on every row creation and update to allow accurate data capture.</li><li><strong>Common options:</strong> Look for fields like <em>updated_on</em>, <em>update_date</em>, or <em>updated_timestamp</em>.</li><li><strong>Data Type:</strong> This column must be a timestamp. Non-timestamp fields will cause the connector to fail.</li><li><strong>Data Accuracy:</strong> A timestamp field that is not updated for every change will prevent the connector from identifying new modifications.</li></ul>"
+            },
+            "source_batch_size": {
+                "type": "number",
+                "title": "Batch Size",
+                "default": 1000,
+                "description": "Enter batch size (e.g., 1000)",
+                "helptext": "<p><strong>Batch Size:</strong> Specifies the number of records to pull per query. Increasing batch size speeds up data retrieval but may risk query timeouts if set too high. Adjust based on the frequency of data changes and the database servers capacity.</p>"
+            },
+            "source_max_batches": {
+                "type": "number",
+                "title": "Maximum Batches",
+                "default": 100,
+                "description": "Enter maximum number of batches (e.g., 10)",
+                "helptext": "<p><strong>Maximum Batches:</strong> Defines the maximum number of batches to pull per run. Once this limit is reached, remaining data is fetched in the next run. Set this according to data modification rates and server capacity.</p>"
+            },
+            "source_database_type": {
+                "type": "string",
+                "title": "Database Type",
+                "default": "postgresql",
+                "format": "hidden"
             }
-        }
+        },
+        "required": ["source_database_host", "source_database_port", "source_database_username", "source_database_pwd",
+        "source_database_name", "source_table", "source_timestamp_column", "source_batch_size", "source_max_batches"]
     }
 }
