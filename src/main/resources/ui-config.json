@@ -10,7 +10,8 @@
                 "title": "Host",
                 "pattern":"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9])$",
                 "description": "Enter database server hostname or IP (e.g., db.example.com)",
-                "helptext": "<p><strong>Host:</strong> Enter the IP address or hostname of the database server. <em>Example:</em> <em>192.168.1.1</em> or <em>db.example.com</em>.</p>\n<p><strong>Recommendation:</strong> If a replica server is available, it is preferable to connect to the replica instead of the main server. This can help reduce load on the primary database.</p>"
+                "helptext": "<p><strong>Host:</strong> Enter the IP address or hostname of the database server. <em>Example:</em> <em>192.168.1.1</em> or <em>db.example.com</em>.</p>\n<p><strong>Recommendation:</strong> If a replica server is available, it is preferable to connect to the replica instead of the main server. This can help reduce load on the primary database.</p>",
+                "uiIndex": 1
             },
             "source_database_port": {
                 "type": "number",
@@ -19,60 +20,69 @@
                 "maximum": 65535,
                 "default": 5432,
                 "description": "Enter port number (default: 5432)",
-                "helptext": "<p><strong>Port:</strong> Enter the port number of the database server. Default PostgreSQL port is <em>5432</em>.</p>"
+                "helptext": "<p><strong>Port:</strong> Enter the port number of the database server. Default PostgreSQL port is <em>5432</em>.</p>",
+                "uiIndex": 2
             },
             "source_database_username": {
                 "type": "string",
                 "title": "Database Username",
                 "description": "Enter database username",
-                "helptext": "<p><strong>Username:</strong> Enter the database username. It is recommended to create a new user with only SELECT permission for security. Use the following SQL commands to create a limited-access user:</p><code>CREATE USER new_user WITH PASSWORD 'your_password';</br>GRANT CONNECT ON DATABASE your_database TO new_user;<br/>GRANT USAGE ON SCHEMA public TO new_user;<br/>GRANT SELECT ON ALL TABLES IN SCHEMA public TO new_user;</code><p>For more information, refer to the <a href=\"https://www.postgresql.org/docs/current/sql-grant.html\" target=\"_blank\">PostgreSQL GRANT documentation</a>.</p>"
+                "helptext": "<p><strong>Username:</strong> Enter the database username. It is recommended to create a new user with only SELECT permission for security. Use the following SQL commands to create a limited-access user:</p><code>CREATE USER new_user WITH PASSWORD 'your_password';</br>GRANT CONNECT ON DATABASE your_database TO new_user;<br/>GRANT USAGE ON SCHEMA public TO new_user;<br/>GRANT SELECT ON ALL TABLES IN SCHEMA public TO new_user;</code><p>For more information, refer to the <a href=\"https://www.postgresql.org/docs/current/sql-grant.html\" target=\"_blank\">PostgreSQL GRANT documentation</a>.</p>",
+                "uiIndex": 3
             },
             "source_database_pwd": {
                 "type": "string",
                 "title": "Database Password",
                 "format": "password",
                 "description": "Enter database password",
-                "helptext": "<p><strong>Password:</strong> The password for the database connection.</p>"
+                "helptext": "<p><strong>Password:</strong> The password for the database connection.</p>",
+                "uiIndex": 4
             },
             "source_database_name": {
                 "type": "string",
                 "title": "Database Name",
                 "pattern": "^[a-zA-Z0-9_]{1,64}$",
                 "description": "Enter database name",
-                "helptext": "<p><strong>Database:</strong> Enter the name of the database to connect to. Ensure the user has the appropriate access.</p>"
+                "helptext": "<p><strong>Database:</strong> Enter the name of the database to connect to. Ensure the user has the appropriate access.</p>",
+                "uiIndex": 5
             },
             "source_table": {
                 "type": "string",
                 "title": "Table Name",
                 "pattern": "^[a-zA-Z_][a-zA-Z0-9_.]{0,62}$",
                 "description": "Enter table name",
-                "helptext": "<p><strong>Table:</strong> Specify the name of the table from which to fetch data. The user should have SELECT permissions only on this table.</p>"
+                "helptext": "<p><strong>Table:</strong> Specify the name of the table from which to fetch data. The user should have SELECT permissions only on this table.</p>",
+                "uiIndex": 6
             },
             "source_timestamp_column": {
                 "type": "string",
                 "title": "Timestamp Column",
                 "description": "Enter timestamp column for incremental fetch",
-                "helptext": "<p><strong>Timestamp Column:</strong> Specify the column that stores timestamps to fetch new and updated data incrementally.</p><ul><li><strong>Ensure this field is updated</strong> on every row creation and update to allow accurate data capture.</li><li><strong>Common options:</strong> Look for fields like <em>updated_on</em>, <em>update_date</em>, or <em>updated_timestamp</em>.</li><li><strong>Data Type:</strong> This column must be a timestamp. Non-timestamp fields will cause the connector to fail.</li><li><strong>Data Accuracy:</strong> A timestamp field that is not updated for every change will prevent the connector from identifying new modifications.</li></ul>"
+                "helptext": "<p><strong>Timestamp Column:</strong> Specify the column that stores timestamps to fetch new and updated data incrementally.</p><ul><li><strong>Ensure this field is updated</strong> on every row creation and update to allow accurate data capture.</li><li><strong>Common options:</strong> Look for fields like <em>updated_on</em>, <em>update_date</em>, or <em>updated_timestamp</em>.</li><li><strong>Data Type:</strong> This column must be a timestamp. Non-timestamp fields will cause the connector to fail.</li><li><strong>Data Accuracy:</strong> A timestamp field that is not updated for every change will prevent the connector from identifying new modifications.</li></ul>",
+                "uiIndex": 7
             },
             "source_batch_size": {
                 "type": "number",
                 "title": "Batch Size",
                 "default": 1000,
                 "description": "Enter batch size (e.g., 1000)",
-                "helptext": "<p><strong>Batch Size:</strong> Specifies the number of records to pull per query. Increasing batch size speeds up data retrieval but may risk query timeouts if set too high. Adjust based on the frequency of data changes and the database servers capacity.</p>"
+                "helptext": "<p><strong>Batch Size:</strong> Specifies the number of records to pull per query. Increasing batch size speeds up data retrieval but may risk query timeouts if set too high. Adjust based on the frequency of data changes and the database servers capacity.</p>",
+                "uiIndex": 8
             },
             "source_max_batches": {
                 "type": "number",
                 "title": "Maximum Batches",
                 "default": 100,
                 "description": "Enter maximum number of batches (e.g., 10)",
-                "helptext": "<p><strong>Maximum Batches:</strong> Defines the maximum number of batches to pull per run. Once this limit is reached, remaining data is fetched in the next run. Set this according to data modification rates and server capacity.</p>"
+                "helptext": "<p><strong>Maximum Batches:</strong> Defines the maximum number of batches to pull per run. Once this limit is reached, remaining data is fetched in the next run. Set this according to data modification rates and server capacity.</p>",
+                "uiIndex": 9
             },
             "source_database_type": {
                 "type": "string",
                 "title": "Database Type",
                 "default": "postgresql",
-                "format": "hidden"
+                "format": "hidden",
+                "uiIndex": 10
             }
         },
         "required": ["source_database_host", "source_database_port", "source_database_username", "source_database_pwd",
