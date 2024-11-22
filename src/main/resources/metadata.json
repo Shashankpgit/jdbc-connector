@@ -21,6 +21,12 @@
             "name": "PostgreSQL",
             "description": "The PostgreSQL Connector is used to move data from any Postgres Table to Obsrv",
             "icon": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Apache_kafka-icon.svg/64px-Apache_kafka-icon.svg.png"
+        },
+        {
+            "id": "mysql-connector",
+            "name": "MySQL",
+            "description": "The MySQL Connector is used to move data from any MySQL Table to Obsrv",
+            "icon": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/MySQL_logo.svg/64px-MySQL_logo.svg.png"
         }
     ]
 }
