@@ -19,7 +19,6 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
 
   test("Embedded Postgres Test Cases") {
 
-    println("\n================| Start |==============\n")
     try {
       val jdbcConfig: Config = ConfigFactory.load("test.conf").withFallback(ConfigFactory.systemEnvironment())
       val postgresConfig = PostgresConnectionConfig(
@@ -32,19 +31,15 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
       )
       val postgres = EmbeddedPostgres.builder.setPort(5432).start()
       val postgresConnect = new PostgresConnect(postgresConfig)
-      println("\n=========Postgres Started==========\n")
+      println("\n========= Embedded Postgres Started==========\n")
       val url = s"jdbc:postgresql://${postgresConfig.host}:${5432}/${postgresConfig.database}?user=${postgresConfig.user}&password=${postgresConfig.password}"
-      //val url = postgres.getJdbcUrl("postgres", "postgres")
       var connection: Connection = null
       connection = DriverManager.getConnection(url)
-      println("\n=============Connection Established=================\n")
       val st: Statement = connection.createStatement()
       createSchema(st)
-      println("\n==============================| Data Insertion successfull |==========================\n")
       val args: Array[String] = Array("-f", "/home/sanketika1/obsrv_embedded_postgres/jdbc-connector/src/test/resources/test.conf", "-c", "nyt-psql.1")
       val jdbc: JDBCSourceConnector = new JDBCSourceConnector
       implicit val config: EmbeddedKafkaConfig = EmbeddedKafkaConfig(kafkaPort = 9092, zooKeeperPort = 2181)
-      println("-----config------")
       EmbeddedKafka.start()(config)
       SourceConnector.process(args, jdbc)
       val properties = new java.util.Properties()
@@ -55,7 +50,6 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
       topics.foreach(println)
       val topic1 = "connector.metrics"
       val topic2 = "dev.ingest"
-      println("\n==========================Data=====================\n")
       val d1Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic1, 1, timeout = 30.seconds)
       d1Events.size should be(1)
       val result: Map[String, Any] = JSONUtil.deserialize[Map[String, Any]](d1Events.head)
@@ -64,16 +58,21 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
       val rel3 = JSONUtil.serialize(result2.get("metric").get)
       val metric:Map[String, Any]=JSONUtil.deserialize[Map[String, Any]](rel3)
       metric.get("success_records_count").get should be(30)
-      println("\n================ Success Records Matched =================== \n")
       metric.get("total_records_count").get should be(30)
-      println("\n================ total Records Matched =================== \n")
       metric.get("failed_records_count").get should be(0)
-      println("\n================ Failed Records Matched =================== \n")
-      println("\n==================Metric================\n")
+      println("\n==================Metric================")
       d1Events.foreach(i => println(i))
       println("\n")
       val d2Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic2, 30, timeout = 30.seconds)
       d2Events.size should be(30)
+//      println("\n============================= wrong Data =========================\n")
+//      setWrongPassword(st)
+//      SourceConnector.process(args, jdbc)
+//      val topic3 = "connector.metrics"
+//      val d3Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic3,1,timeout=30.seconds)
+//      println("\n============== Metric for Wrong Password ===========")
+//      d3Events.foreach(i => println(i))
+//      println("\n")
       println("\n==============================| successfull |==========================\n")
     }
     catch {
@@ -106,4 +105,15 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
         println("Sample Data Count: "+res.getInt(1))
       }
   }
+  def setConnectorInstance(st:Statement):Unit={
+    val deleteRecord:String = "DELETE FROM connector_instances;"
+    st.executeUpdate(deleteRecord)
+    val insertConnectorInstance: String = "INSERT INTO connector_instances (\n    id,\n    dataset_id,\n    connector_id,\n    connector_config,\n    operations_config,\n    status,\n    connector_state,\n    connector_stats,\n    created_by,\n    updated_by,\n    created_date,\n    updated_date,\n    published_date\n) VALUES (\n    'nyt-psql.1', \n    'new-york-taxi-data', \n\t'postgres-connector-1.0.0',\n\t'OBnGkE1P206Q+IBNL5cPtnan0+M0r5enNyoormaNbW4P64onl3HH0RVK2AtpWc4QgnhjcuyENPYWYsqMxk7IX048JTSBRjC7UqibBrJ1LMM2RLAjxo7RHXEFfjD3zy2wjrinWLw2yYf3inG4yE0gM9eEgWxmhDESbMO63JsaeIIFiJVztAjdyzsX/lMWPD94uDT8Fwqa49ZBFvSP2JTJLF4h28vu9YNRgQya5MP1f+WsUp6+X3i7Fx+C2J5wLGSrK8T1F5R9S+AsZT2CVxSRJzLM4Nh7AI3ArQZszZ9Wq/IBhF5SpFyZ9vx1xo0vSNxBsb9EmidU9jp8QCMzTAwosoRmr38qbDJG7TdDhpgrLGaNKtPfBQpFJN3njvR5G1a7C6ypocWGJonT9U26MhZTN0e1udqP8oFXcVXUTIoE4+kCrl9vJYbRb3PWtOTP6JP6EtYYvSIg5Mzw+GgGYAUpXhpRiSrnq1R6+0POCggmYDA=', \n    '{}'::json,  \n    'Live', \n    '{}'::json,  \n    '{}'::json, \n    'SYSTEM', \n    'SYSTEM', \n    now(), \n    now(), \n    now()\n);"
+    st.executeUpdate(insertConnectorInstance)
+  }
+   def setWrongPassword(st:Statement):Unit={
+     val setWrongPassword: String = "UPDATE connector_instances" +
+       " SET connector_config='OBnGkE1P206Q+IBNL5cPtnan0+M0r5enNyoormaNbW4P64onl3HH0RVK2AtpWc4QgnhjcuyENPYWYsqMxk7IX048JTSBRjC7UqibBrJ1LMM2RLAjxo7RHXEFfjD3zy2wjrinWLw2yYf3inG4yE0gM9eEgWxmhDESbMO63JsaeIIFiJVztAjdyzsX/lMWPD94uDT8Fwqa49ZBFvSP2JTJLF4h28vu9YNRgQya5MP1f+WsUp6+X3i7Fx+C2J5wLGSrK8T1F5R9S+AsZT2CVxSRJzLM4Nh7AI3ArQZszZ9Wq/IBhF5SpFyZ9vx1xo0vSNxBsb9EmidU9jp8QCMzTAwosoRmr38qbDJG7TdDhpgrLGaNKtPfBQpFJN3njvR5G1a7C6ypocWGJonT9U26MhZTN1KgM47tBjvdqsybA9k9SZOqVXmazCGjfAoDXMWZ6JjADr9MwFpWRGzPpuYGs2+P1RmCNJUjCLkbrn68W8SP8h4=' WHERE id='nyt-psql.1';"
+     st.executeUpdate(setWrongPassword);
+   }
 }

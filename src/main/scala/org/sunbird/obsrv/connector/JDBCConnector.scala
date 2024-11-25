@@ -72,7 +72,6 @@ class JDBCSourceConnector extends ISourceConnector {
   }
 
   private def countNewRecords(spark: SparkSession, ctx: ConnectorContext, jdbcConfig: JDBCConfig): Long = {
-    println("\n==========================================|  Counting Records  |=============================================\n")
     val countQuery = jdbcConfig.source.countQuery(jdbcConfig.table, jdbcConfig.timestampColumn, ctx.state.getState[AnyRef]("lastRecordTimestamp"))
     val df = readData(spark, jdbcConfig, countQuery)
     df.head().getAs[Long]("count")
