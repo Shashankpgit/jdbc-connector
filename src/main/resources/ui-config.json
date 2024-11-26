@@ -147,7 +147,7 @@
                 "type": "string",
                 "title": "Timestamp Column",
                 "description": "Enter timestamp column for incremental fetch",
-                "helptext": "<p><strong>Timestamp Column:</strong> Specify the column that stores timestamps to fetch new and updated data incrementally.</p><ul><li><strong>Ensure this field is updated</strong> on every row creation and update to allow accurate data capture.</li><li><strong>Common options:</strong> Look for fields like <em>updated_on</em>, <em>update_date</em>, or <em>updated_timestamp</em>.</li><li><strong>Data Type:</strong> This column must be a timestamp. Non-timestamp fields will cause the connector to fail.</li><li><strong>Data Accuracy:</strong> A timestamp field that is not updated for every change will prevent the connector from identifying new modifications.</li></ul>",
+                "helptext": "<p><strong>Timestamp Column:</strong> Specify the column that stores timestamps to fetch new and updated data incrementally.</p><ul><li><strong> Ensure this field is updated</strong> on every row creation and update to allow accurate data capture.</li><li><strong>Common options:</strong> Look for fields like <em>updated_on</em>, <em>update_date</em>, or <em>updated_timestamp</em>.</li><li><strong>Data Type:</strong> This column must be a timestamp. Non-timestamp fields will cause the connector to fail.</li><li><strong>Data Accuracy:</strong> A timestamp field that is not updated for every change will prevent the connector from identifying new modifications.</li></ul>",
                 "uiIndex": 7
             },
             "source_batch_size": {
