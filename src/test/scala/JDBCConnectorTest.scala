@@ -65,14 +65,6 @@ class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
       println("\n")
       val d2Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic2, 30, timeout = 30.seconds)
       d2Events.size should be(30)
-//      println("\n============================= wrong Data =========================\n")
-//      setWrongPassword(st)
-//      SourceConnector.process(args, jdbc)
-//      val topic3 = "connector.metrics"
-//      val d3Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic3,1,timeout=30.seconds)
-//      println("\n============== Metric for Wrong Password ===========")
-//      d3Events.foreach(i => println(i))
-//      println("\n")
       println("\n==============================| successfull |==========================\n")
     }
     catch {
