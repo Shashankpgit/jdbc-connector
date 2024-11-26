@@ -15,7 +15,7 @@ import java.time.Duration
 import java.util.{Properties, Collections}
 import org.scalatest.matchers.should.Matchers
 
-class EmbeddedPostgresTest extends AnyFunSuite with Matchers {
+class JDBCConnectorTest extends AnyFunSuite with Matchers {
 
   test("Embedded Postgres Test Cases") {
 
