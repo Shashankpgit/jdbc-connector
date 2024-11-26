@@ -18,7 +18,6 @@ import org.scalatest.matchers.should.Matchers
 class JDBCConnectorTest extends AnyFunSuite with Matchers {
 
   test("Embedded Postgres Test Cases") {
-
     try {
       val jdbcConfig: Config = ConfigFactory.load("test.conf").withFallback(ConfigFactory.systemEnvironment())
       val postgresConfig = PostgresConnectionConfig(
@@ -31,7 +30,6 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
       )
       val postgres = EmbeddedPostgres.builder.setPort(5432).start()
       val postgresConnect = new PostgresConnect(postgresConfig)
-      println("\n========= Embedded Postgres Started==========\n")
       val url = s"jdbc:postgresql://${postgresConfig.host}:${5432}/${postgresConfig.database}?user=${postgresConfig.user}&password=${postgresConfig.password}"
       var connection: Connection = null
       connection = DriverManager.getConnection(url)
@@ -60,12 +58,11 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
       metric.get("success_records_count").get should be(30)
       metric.get("total_records_count").get should be(30)
       metric.get("failed_records_count").get should be(0)
-      println("\n==================Metric================")
+      println("\nMetric: ")
       d1Events.foreach(i => println(i))
       println("\n")
       val d2Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic2, 30, timeout = 30.seconds)
       d2Events.size should be(30)
-      println("\n==============================| successfull |==========================\n")
     }
     catch {
       case e: Exception => e.printStackTrace()
