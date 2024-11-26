@@ -20,7 +20,8 @@
             "id": "postgres-connector",
             "name": "PostgreSQL",
             "description": "The PostgreSQL Connector is used to move data from any Postgres Table to Obsrv",
-            "icon": "postgresql.svg"        },
+            "icon": "postgresql.svg"
+        },
         {
             "id": "mysql-connector",
             "name": "MySQL",
