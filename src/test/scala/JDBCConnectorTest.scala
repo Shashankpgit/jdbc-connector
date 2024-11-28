@@ -58,12 +58,12 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
     }
   }
 
-  test("Connector Metrics Size"){
+  test("Connector Metrics Count"){
     setUpServices()
     d1Events.size should be(1)
   }
 
-  test("Dev topic size"){
+  test("Ingest topic size"){
     d2Events.size should be(30)
   }
 
