@@ -38,7 +38,7 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
       val connection: Connection = DriverManager.getConnection(url)
       val st: Statement = connection.createStatement()
       createSchema(st)
-      val args: Array[String] = Array("-f", "/home/sanketika1/obsrv_embedded_postgres/jdbc-connector/src/test/resources/test.conf", "-c", "nyt-psql.1")
+      val args: Array[String] = Array("-f", "src/test/resources/test.conf", "-c", "nyt-psql.1")
       val jdbc: JDBCSourceConnector = new JDBCSourceConnector
       implicit val config: EmbeddedKafkaConfig = EmbeddedKafkaConfig(kafkaPort = 9092, zooKeeperPort = 2181)
       EmbeddedKafka.start()(config)
