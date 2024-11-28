@@ -116,7 +116,7 @@
                 "type": "string",
                 "title": "Database Username",
                 "description": "Enter database username",
-                "helptext": "<p><strong>Username:</strong> Enter the database username. It is recommended to create a new user with only SELECT permission for security. Use the following SQL commands to create a limited-access user:</p><code>CREATE USER new_user WITH PASSWORD 'your_password';</br>GRANT CONNECT ON DATABASE your_database TO new_user;<br/>GRANT USAGE ON SCHEMA public TO new_user;<br/>GRANT SELECT ON ALL TABLES IN SCHEMA public TO new_user;</code><p>For more information, refer to the <a href=\"https://www.mysql.com/docs/current/sql-grant.html\" target=\"_blank\">MySQL GRANT documentation</a>.</p>",
+                "helptext": "<p><strong>Username:</strong> Enter the database username. It is recommended to create a new user with only SELECT permission for security. Use the following SQL commands to create a limited-access user:</p><code>CREATE USER new_user WITH PASSWORD 'your_password';</br>GRANT CONNECT ON DATABASE your_database TO new_user;<br/>GRANT USAGE ON SCHEMA public TO new_user;<br/>GRANT SELECT ON ALL TABLES IN SCHEMA public TO new_user;</code><p>For more information, refer to the <a href=\"https://dev.mysql.com/doc/refman/9.1/en/grant.html\" target=\"_blank\">MySQL GRANT documentation</a>.</p>",
                 "uiIndex": 3
             },
             "source_database_pwd": {
