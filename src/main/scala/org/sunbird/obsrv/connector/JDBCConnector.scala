@@ -35,6 +35,7 @@ class JDBCSourceConnector extends ISourceConnector {
   private def getDriver(dbType: String): IJDBCSource = {
     dbType match {
       case "postgresql" => new PostgresSource
+      case "mysql" => new MySQLSource
       case _ => throw new Exception("")
     }
   }
