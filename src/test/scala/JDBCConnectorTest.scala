@@ -17,7 +17,11 @@ import org.scalatest.matchers.should.Matchers
 
 class JDBCConnectorTest extends AnyFunSuite with Matchers {
 
-  test("Embedded Postgres Test Cases") {
+  var metric: Map[String,Any] = Map.empty.withDefaultValue(null)
+  var d1Events: List[String] = null
+  var d2Events: List[String] = null
+
+  def setUpServices():Unit= {
     try {
       val jdbcConfig: Config = ConfigFactory.load("test.conf").withFallback(ConfigFactory.systemEnvironment())
       val postgresConfig = PostgresConnectionConfig(
@@ -31,8 +35,7 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
       val postgres = EmbeddedPostgres.builder.setPort(5432).start()
       val postgresConnect = new PostgresConnect(postgresConfig)
       val url = s"jdbc:postgresql://${postgresConfig.host}:${5432}/${postgresConfig.database}?user=${postgresConfig.user}&password=${postgresConfig.password}"
-      var connection: Connection = null
-      connection = DriverManager.getConnection(url)
+      val connection: Connection = DriverManager.getConnection(url)
       val st: Statement = connection.createStatement()
       createSchema(st)
       val args: Array[String] = Array("-f", "/home/sanketika1/obsrv_embedded_postgres/jdbc-connector/src/test/resources/test.conf", "-c", "nyt-psql.1")
@@ -40,34 +43,42 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
       implicit val config: EmbeddedKafkaConfig = EmbeddedKafkaConfig(kafkaPort = 9092, zooKeeperPort = 2181)
       EmbeddedKafka.start()(config)
       SourceConnector.process(args, jdbc)
-      val properties = new java.util.Properties()
-      properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092")
-      val adminClient = AdminClient.create(properties)
-      val topics = adminClient.listTopics().names().get().asScala
-      println("Topics:")
-      topics.foreach(println)
-      val topic1 = "connector.metrics"
-      val topic2 = "dev.ingest"
-      val d1Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic1, 1, timeout = 30.seconds)
-      d1Events.size should be(1)
+      d1Events = EmbeddedKafka.consumeNumberMessagesFrom[String]("connector.metrics", 1, timeout = 30.seconds)
       val result: Map[String, Any] = JSONUtil.deserialize[Map[String, Any]](d1Events.head)
       val rel1 = JSONUtil.serialize(result.get("edata").get)
-      val result2:Map[String, Any]=JSONUtil.deserialize[Map[String, Any]](rel1)
+      val result2:Map[String, Any] = JSONUtil.deserialize[Map[String, Any]](rel1)
       val rel3 = JSONUtil.serialize(result2.get("metric").get)
-      val metric:Map[String, Any]=JSONUtil.deserialize[Map[String, Any]](rel3)
-      metric.get("success_records_count").get should be(30)
-      metric.get("total_records_count").get should be(30)
-      metric.get("failed_records_count").get should be(0)
+      metric=JSONUtil.deserialize[Map[String, Any]](rel3)
       println("\nMetric: ")
       d1Events.foreach(i => println(i))
-      println("\n")
-      val d2Events = EmbeddedKafka.consumeNumberMessagesFrom[String](topic2, 30, timeout = 30.seconds)
-      d2Events.size should be(30)
+      d2Events = EmbeddedKafka.consumeNumberMessagesFrom[String]("dev.ingest", 30, timeout = 30.seconds)
     }
     catch {
       case e: Exception => e.printStackTrace()
     }
   }
+
+  test("Connector Metrics Size"){
+    setUpServices()
+    d1Events.size should be(1)
+  }
+
+  test("Dev topic size"){
+    d2Events.size should be(30)
+  }
+
+  test("Successful Records Count"){
+    metric.get("success_records_count").get.asInstanceOf[Int] should be(30)
+  }
+
+  test("Failed Records Count") {
+    metric.get("failed_records_count").get.asInstanceOf[Int] should be(0)
+  }
+
+  test("Total Records Count"){
+    metric.get("total_records_count").get.asInstanceOf[Int] should be(30)
+  }
+
   def createSchema(st:Statement): Unit = {
     val createDatasets: String = "CREATE TABLE datasets (\n\tid text NOT NULL,\n\tdataset_id text NULL,\n\t\"type\" text NOT NULL,\n\t\"name\" text NULL,\n\tvalidation_config json NULL,\n\textraction_config json NULL,\n\tdedup_config json NULL,\n\tdata_schema json NULL,\n\tdenorm_config json NULL,\n\trouter_config json NULL,\n\tdataset_config json NULL,\n\ttags _text NULL,\n\tdata_version int4 NULL,\n\tstatus text NULL,\n\tcreated_by text NULL,\n\tupdated_by text NULL,\n\tcreated_date timestamp DEFAULT now() NOT NULL,\n\tupdated_date timestamp NOT NULL,\n\tpublished_date timestamp DEFAULT now() NOT NULL,\n\tapi_version varchar(255) DEFAULT 'v1'::character varying NOT NULL,\n\t\"version\" int4 DEFAULT 1 NOT NULL,\n\tsample_data json DEFAULT '{}'::json NULL,\n\tentry_topic text DEFAULT '{{ .Values.global.env }}.ingest'::text NOT NULL,\n\tCONSTRAINT datasets_pkey PRIMARY KEY (id)\n);"
     val createConnectorRegistry: String = "CREATE TABLE connector_registry (\n\tid text NOT NULL,\n\tconnector_id text NOT NULL,\n\t\"name\" text NOT NULL,\n\t\"type\" text NOT NULL,\n\tcategory text NOT NULL,\n\t\"version\" text NOT NULL,\n\tdescription text NULL,\n\ttechnology text NOT NULL,\n\truntime text NOT NULL,\n\tlicence text NOT NULL,\n\t\"owner\" text NOT NULL,\n\ticonurl text NULL,\n\tstatus text NOT NULL,\n\tui_spec json DEFAULT '{}'::json NOT NULL,\n\tsource_url text NOT NULL,\n\t\"source\" json NOT NULL,\n\tcreated_by text NOT NULL,\n\tupdated_by text NOT NULL,\n\tcreated_date timestamp NOT NULL,\n\tupdated_date timestamp NOT NULL,\n\tlive_date timestamp NULL,\n\tCONSTRAINT connector_registry_connector_id_version_key UNIQUE (connector_id, version),\n\tCONSTRAINT connector_registry_pkey PRIMARY KEY (id)\n);"
@@ -79,6 +90,7 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
     st.executeUpdate(createSampleData)
     insertData(st)
   }
+
   def insertData(st:Statement):Unit={
     val insertDatasets: String = "INSERT INTO datasets\n(\n    id, dataset_id, \"type\", \"name\", validation_config, extraction_config, \n    dedup_config, data_schema, denorm_config, router_config, dataset_config, \n    tags, data_version, status, created_by, updated_by, created_date, updated_date, \n    published_date, api_version, \"version\", sample_data, entry_topic\n)\nVALUES (\n    'new-york-taxi-data',\n    'new-york-taxi-data',\n    'event',\n    'New York Taxi Data',\n    '{\"validate\": true, \"mode\": \"Strict\"}',\n    '{\"is_batch_event\": true, \"extraction_key\": \"events\", \"dedup_config\": {\"drop_duplicates\": true, \"dedup_key\": \"id\", \"dedup_period\": 604800}}',\n    '{\"drop_duplicates\": true, \"dedup_key\": \"id\", \"dedup_period\": 604800}',\n    '{\"$schema\": \"https://json-schema.org/draft/2020-12/schema\", \"type\": \"object\", \"properties\": {\"tripID\": {\"key\": \"tripID\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": false}, \"VendorID\": {\"key\": \"VendorID\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"tpep_pickup_datetime\": {\"key\": \"tpep_pickup_datetime\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"date-time\", \"isRequired\": false, \"resolved\": false}, \"tpep_dropoff_datetime\": {\"key\": \"tpep_dropoff_datetime\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"date-time\", \"isRequired\": false, \"resolved\": false}, \"passenger_count\": {\"key\": \"passenger_count\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"trip_distance\": {\"key\": \"trip_distance\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"RatecodeID\": {\"key\": \"RatecodeID\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"store_and_fwd_flag\": {\"key\": \"store_and_fwd_flag\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"PULocationID\": {\"key\": \"PULocationID\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"DOLocationID\": {\"key\": \"DOLocationID\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"payment_type\": {\"key\": \"payment_type\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"primary_passenger\": {\"key\": \"primary_passenger\", \"type\": \"object\", \"arrival_format\": \"object\", \"data_type\": \"object\", \"isRequired\": false, \"resolved\": true, \"properties\": {\"email\": {\"key\": \"email\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"mobile\": {\"key\": \"mobile\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}}, \"additionalProperties\": false}, \"fare_details\": {\"key\": \"fare_details\", \"type\": \"object\", \"arrival_format\": \"object\", \"data_type\": \"object\", \"isRequired\": false, \"resolved\": true, \"properties\": {\"fare_amount\": {\"key\": \"fare_amount\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"extra\": {\"key\": \"extra\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"mta_tax\": {\"key\": \"mta_tax\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"tip_amount\": {\"key\": \"tip_amount\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"tolls_amount\": {\"key\": \"tolls_amount\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"improvement_surcharge\": {\"key\": \"improvement_surcharge\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"total_amount\": {\"key\": \"total_amount\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}, \"congestion_surcharge\": {\"key\": \"congestion_surcharge\", \"type\": \"string\", \"arrival_format\": \"text\", \"data_type\": \"string\", \"isRequired\": false, \"resolved\": true}}, \"additionalProperties\": false}}, \"additionalProperties\": false}',\n    '{\"redis_db_host\": \"redis-denorm-headless.redis.svc.cluster.local\", \"redis_db_port\": 6379, \"denorm_fields\": []}',\n    '{\"topic\": \"new-york-taxi-data\"}',\n    '{\"file_upload_path\": [\"api-service/user_uploads/sample_538125.json\"], \"indexing_config\": {\"olap_store_enabled\": true, \"lakehouse_enabled\": true, \"cache_enabled\": false}, \"keys_config\": {\"data_key\": \"\", \"partition_key\": \"\", \"timestamp_key\": \"obsrv_meta.syncts\"}, \"cache_config\": {\"redis_db_host\": \"redis-denorm-headless.redis.svc.cluster.local\", \"redis_db_port\": 6379, \"redis_db\": 0}}',\n    '{\"tag1\", \"tag2\"}',  -- Replace with valid tags or NULL\n    0,\n    'Live',\n    'SYSTEM',\n    'SYSTEM',\n    now(),\n    now(),\n    now(),\n    'v1',\n    1,\n    '{\"mergedEvent\": {\"tripID\": \"dcca0f14-d92d-4720-a533-b77ce159a309\", \"VendorID\": \"1\", \"tpep_pickup_datetime\": \"2023-10-17 17:57:46\", \"tpep_dropoff_datetime\": \"2023-10-17 18:08:43\", \"passenger_count\": \"4\", \"trip_distance\": \".90\", \"RatecodeID\": \"1\", \"store_and_fwd_flag\": \"N\", \"PULocationID\": \"161\", \"DOLocationID\": \"186\", \"payment_type\": \"1\", \"primary_passenger\": {\"email\": \"Kayden_Roob@hotmail.com\", \"mobile\": \"517.714.5595 x5944\"}, \"fare_details\": {\"fare_amount\": \"8\", \"extra\": \"0\", \"mta_tax\": \"0.5\", \"tip_amount\": \"2.2\", \"tolls_amount\": \"0\", \"improvement_surcharge\": \"0.3\", \"total_amount\": \"11\", \"congestion_surcharge\": \"\"}}}'::json,\n    'dev.ingest'\n);"
     val insertConnectorRegistry: String = "INSERT INTO connector_registry(\n    id, connector_id, name, type, category, version, description, technology, runtime, licence, owner, status, ui_spec, source_url, source, created_by, updated_by, created_date, updated_date, live_date\n) \nVALUES (\n    'postgres-connector-1.0.0', \n    'postgres-connector', \n    'postgresql', \n    'source', \n    'Database', \n    '1.0.0', \n    'The PostgreSQL Connector is used to move data from any Postgres Table to Obsrv', \n    'scala', \n    'spark', \n    'MIT', \n    'Sunbird', \n    'Live', \n    '{\"title\": \"PostgreSQL JDBC Connector Setup Instructions\", \"description\": \"Configure PostgreSQL JDBC Connector\", \"helptext\": \"Follow the below instructions to populate the required inputs needed for the connector correctly.\", \"type\": \"object\", \"properties\": {\"source_database_host\": {\"type\": \"string\", \"title\": \"Host\", \"pattern\": \"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\\\\-]*[a-zA-Z0-9])\\\\.)*([A-Za-z0-9]|[A-Za-z0-9][a-zA-Z0-9\\\\-]*[a-zA-Z0-9])$\", \"description\": \"Enter database server hostname or IP (e.g., db.example.com)\", \"helptext\": \"<p><strong>Host:</strong> Enter the IP address or hostname of the database server. <em>Example:</em> <em>192.168.1.1</em> or <em>db.example.com</em>.</p> <p><strong>Recommendation:</strong> If a replica server is available, it is preferable to connect to the replica instead of the main server. This can help reduce load on the primary database.</p>\", \"uiIndex\": 1}, \"source_database_port\": {\"type\": \"number\", \"title\": \"Port\", \"minimum\": 1, \"maximum\": 65535, \"default\": 5432, \"description\": \"Enter port number (default: 5432)\", \"helptext\": \"<p><strong>Port:</strong> Enter the port number of the database server. Default PostgreSQL port is <em>5432</em>.</p>\", \"uiIndex\": 2}}}', \n    'jdbc-connector-1.0.0-distribution.tar_9ea519.gz', \n    '{\"source\": \"jdbc-connector-1.0.0\", \"main_class\": \"org.sunbird.obsrv.connector.JDBCConnector\", \"main_program\": \"jdbc-connector-1.0.0.jar\"}', \n    'SYSTEM', \n    'SYSTEM', \n    now(), \n    now(), \n    now()\n);"
@@ -94,15 +106,18 @@ class JDBCConnectorTest extends AnyFunSuite with Matchers {
         println("Sample Data Count: "+res.getInt(1))
       }
   }
+
   def setConnectorInstance(st:Statement):Unit={
     val deleteRecord:String = "DELETE FROM connector_instances;"
     st.executeUpdate(deleteRecord)
     val insertConnectorInstance: String = "INSERT INTO connector_instances (\n    id,\n    dataset_id,\n    connector_id,\n    connector_config,\n    operations_config,\n    status,\n    connector_state,\n    connector_stats,\n    created_by,\n    updated_by,\n    created_date,\n    updated_date,\n    published_date\n) VALUES (\n    'nyt-psql.1', \n    'new-york-taxi-data', \n\t'postgres-connector-1.0.0',\n\t'OBnGkE1P206Q+IBNL5cPtnan0+M0r5enNyoormaNbW4P64onl3HH0RVK2AtpWc4QgnhjcuyENPYWYsqMxk7IX048JTSBRjC7UqibBrJ1LMM2RLAjxo7RHXEFfjD3zy2wjrinWLw2yYf3inG4yE0gM9eEgWxmhDESbMO63JsaeIIFiJVztAjdyzsX/lMWPD94uDT8Fwqa49ZBFvSP2JTJLF4h28vu9YNRgQya5MP1f+WsUp6+X3i7Fx+C2J5wLGSrK8T1F5R9S+AsZT2CVxSRJzLM4Nh7AI3ArQZszZ9Wq/IBhF5SpFyZ9vx1xo0vSNxBsb9EmidU9jp8QCMzTAwosoRmr38qbDJG7TdDhpgrLGaNKtPfBQpFJN3njvR5G1a7C6ypocWGJonT9U26MhZTN0e1udqP8oFXcVXUTIoE4+kCrl9vJYbRb3PWtOTP6JP6EtYYvSIg5Mzw+GgGYAUpXhpRiSrnq1R6+0POCggmYDA=', \n    '{}'::json,  \n    'Live', \n    '{}'::json,  \n    '{}'::json, \n    'SYSTEM', \n    'SYSTEM', \n    now(), \n    now(), \n    now()\n);"
     st.executeUpdate(insertConnectorInstance)
   }
+
    def setWrongPassword(st:Statement):Unit={
      val setWrongPassword: String = "UPDATE connector_instances" +
        " SET connector_config='OBnGkE1P206Q+IBNL5cPtnan0+M0r5enNyoormaNbW4P64onl3HH0RVK2AtpWc4QgnhjcuyENPYWYsqMxk7IX048JTSBRjC7UqibBrJ1LMM2RLAjxo7RHXEFfjD3zy2wjrinWLw2yYf3inG4yE0gM9eEgWxmhDESbMO63JsaeIIFiJVztAjdyzsX/lMWPD94uDT8Fwqa49ZBFvSP2JTJLF4h28vu9YNRgQya5MP1f+WsUp6+X3i7Fx+C2J5wLGSrK8T1F5R9S+AsZT2CVxSRJzLM4Nh7AI3ArQZszZ9Wq/IBhF5SpFyZ9vx1xo0vSNxBsb9EmidU9jp8QCMzTAwosoRmr38qbDJG7TdDhpgrLGaNKtPfBQpFJN3njvR5G1a7C6ypocWGJonT9U26MhZTN1KgM47tBjvdqsybA9k9SZOqVXmazCGjfAoDXMWZ6JjADr9MwFpWRGzPpuYGs2+P1RmCNJUjCLkbrn68W8SP8h4=' WHERE id='nyt-psql.1';"
      st.executeUpdate(setWrongPassword);
    }
 }
+
