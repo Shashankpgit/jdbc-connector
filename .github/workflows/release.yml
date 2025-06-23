@@ -22,7 +22,7 @@ jobs:
       - name: Clone and build connector-sdk-spark
         run: |
           echo "Cloning SDK..."
-          git clone https://github.com/Sunbird-Obsrv/connector-sdk-scala.git
+          git clone https://github.com/Sanketika-Obsrv/connector-sdk-scala.git
           cd connector-sdk-scala
           mvn clean install -pl connector-sdk-spark -am -DskipTests
 
