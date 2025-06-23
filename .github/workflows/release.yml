@@ -26,6 +26,14 @@ jobs:
         java-version: '11'
         cache: 'maven'
 
+    - name: 🧱 Clone job-sdk-scala
+      run: git clone https://github.com/Sanketika-Obsrv/job-sdk-scala.git
+
+    - name: 🔨 Build job-sdk-scala
+      run: |
+        cd job-sdk-scala
+        mvn clean install
+
     - name: 🧱 Clone connector-sdk-scala
       run: git clone https://github.com/Sanketika-Obsrv/connector-sdk-scala.git
 
@@ -34,13 +42,6 @@ jobs:
         cd connector-sdk-scala
         mvn clean install
 
-    - name: 🧱 Clone job-sdk-scala
-      run: git clone https://github.com/Sanketika-Obsrv/job-sdk-scala.git
-
-    - name: 🔨 Build job-sdk-scala
-      run: |
-        cd job-sdk-scala
-        mvn clean install
 
     - name: 🏗️ Build JDBC Connector
       run: mvn clean package -DskipTests
