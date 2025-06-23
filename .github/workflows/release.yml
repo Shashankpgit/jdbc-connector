@@ -51,10 +51,11 @@ jobs:
 
     - name: 📂 Prepare dist directory
       run: |
-        mkdir dist
-        cp target/*.jar dist/ || { echo "❌ No JAR found to package."; exit 1; }
-        cp README.md dist/ || true
-        echo "Version: ${GITHUB_REF#refs/tags/}" > dist/VERSION.txt
+        mkdir -p dist/jdbc-connector-1.0.0
+        cp target/*.jar dist/jdbc-connector-1.0.0/
+        cp -r libs dist/jdbc-connector-1.0.0/
+        cp metadata.json ui-config.json *.svg dist/jdbc-connector-1.0.0/ || true
+        echo "Version: ${GITHUB_REF#refs/tags/}" > dist/jdbc-connector-1.0.0/VERSION.txt
 
     - name: 📦 Create dist.tar.gz archive
       run: tar -czvf dist.tar.gz dist/
