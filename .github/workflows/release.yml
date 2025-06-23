@@ -46,10 +46,15 @@ jobs:
     - name: 🏗️ Build JDBC Connector
       run: mvn clean package -DskipTests
 
+    - name: 🔍 Inspect build output
+      run: ls -lh target/
+
     - name: 📂 Prepare dist directory
       run: |
         mkdir dist
-        cp target/*.jar dist/
+        cp target/*.jar dist/ || { echo "❌ No JAR found to package."; exit 1; }
+        cp README.md dist/ || true
+        echo "Version: ${GITHUB_REF#refs/tags/}" > dist/VERSION.txt
 
     - name: 📦 Create dist.tar.gz archive
       run: tar -czvf dist.tar.gz dist/
