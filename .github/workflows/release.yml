@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout JDBC Connector repo
         uses: actions/checkout@v4
 
       - name: Set up JDK 11
@@ -19,7 +19,14 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Build with Maven
+      - name: Clone and build connector-sdk-spark
+        run: |
+          echo "Cloning SDK..."
+          git clone https://github.com/Sunbird-Obsrv/connector-sdk-scala.git
+          cd connector-sdk-scala
+          mvn clean install
+
+      - name: Build JDBC Connector with Maven
         run: mvn clean package
 
       - name: Create dist directory and copy JAR
