@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout JDBC Connector Code
+    - name: 🧾 Checkout JDBC Connector Code
       uses: actions/checkout@v4
 
     - name: ☕ Set up Java 11
@@ -19,7 +19,7 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
 
-    - name: 📦 Set up Maven
+    - name: 🧰 Set up Maven
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
@@ -42,25 +42,19 @@ jobs:
         cd connector-sdk-scala
         mvn clean install
 
-
-    - name: 🏗️ Build JDBC Connector
+    - name: 🚧 Build JDBC Connector
       run: mvn clean package -DskipTests
 
-    - name: 🔍 Inspect build output
+    - name: 📂 Inspect target/ directory
       run: ls -lh target/
 
-    - name: 📂 Prepare dist directory
+    - name: 📦 Rename distribution tarball
       run: |
-        mkdir -p dist
-        cp -r target/jdbc-connector-1.0.0 dist/
-        echo "Version: ${GITHUB_REF#refs/tags/}" > dist/jdbc-connector-1.0.0/VERSION.txt
-
-    - name: 📦 Create dist.tar.gz archive
-      run: tar -czvf dist.tar.gz dist/
+        cp target/jdbc-connector-1.0.0-distribution.tar.gz jdbc-connector.tar.gz
 
     - name: 🚀 Upload Release Asset
       uses: softprops/action-gh-release@v2
       with:
-        files: dist.tar.gz
+        files: jdbc-connector.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
