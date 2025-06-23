@@ -24,8 +24,8 @@ jobs:
           echo "Cloning SDK..."
           git clone https://github.com/Sunbird-Obsrv/connector-sdk-scala.git
           cd connector-sdk-scala
-          mvn clean install
-
+          mvn clean install -pl connector-sdk-spark -am
+          
       - name: Build JDBC Connector with Maven
         run: mvn clean package
 
