@@ -42,12 +42,13 @@ jobs:
         mvn clean install
 
 
+    - name: 🏗️ Build JDBC Connector
+      run: mvn clean package -DskipTests
+
     - name: 📂 Prepare dist directory
       run: |
         mkdir dist
-        cp target/*.jar dist/jdbc-connector.jar
-        cp README.md dist/
-        echo "Version: ${GITHUB_REF#refs/tags/}" > dist/VERSION.txt
+        cp target/*.jar dist/
 
     - name: 📦 Create dist.tar.gz archive
       run: tar -czvf dist.tar.gz dist/
@@ -57,4 +58,4 @@ jobs:
       with:
         files: dist.tar.gz
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
